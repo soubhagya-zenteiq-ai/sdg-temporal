@@ -1,0 +1,8 @@
+venv/
+.git/
+__pycache__/
+*.pyc
+.env
+data/
+# models/ is mounted as volume, no need to send to build context
+models/
