@@ -18,7 +18,6 @@ def parse_md(file_path: str) -> dict:
     content = path.read_text(encoding="utf-8")
 
     # Remove code blocks
-    content = re.sub(r"```.*?```", "", content, flags=re.DOTALL)
 
     # Normalize whitespace
     content = re.sub(r"\n{3,}", "\n\n", content)
