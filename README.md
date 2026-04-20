@@ -84,54 +84,42 @@ python3 -m app.main --file ./data/sample.md
 python3 -m app.main --dir ./data/docs/
 ```
 
+## ⚡ Execution Commands
+
+### A. Ingest Single File
+```bash
+python3 -m app.main --file ./data/markdown/sample.md
+```
+
+### B. Ingest Entire Directory (Batch)
+```bash
+python3 -m app.main --dir ./data/markdown/
+```
+
+### C. Export Results to Text
+```bash
+python3 scripts/export_db.py
+```
+
 ---
 
-## 🛠 Key Features
+## 🔍 Monitoring & DB Checks
 
--   **Parallel Processing**: Each chunk of a document is processed as an independent Temporal activity, allowing huge speedups on multi-core systems.
--   **Infinite Retries**: If the LLM service crashes or the DB is down, Temporal will pause and retry exactly where it left off.
--   **Local Intelligence**: No data leaves your infrastructure; all processing is done via local GGUF models.
--   **Idempotency**: Reprocessing the same file will update existing records rather than creating duplicates.
-
-> 📚 **Deep Dive**: For a complete breakdown of how the chunking logic works, how the LLM avoids "blabbering" via Grammar Constraints, and the exact database hierarchy, check out the [INFO.md](INFO.md) guide!
-
----
-
-## 🔍 Monitoring & Logs
-
-### 1. The Temporal Dashboard
-You can monitor all workflow executions, track active workers, and view activity payloads in your browser:
+### Temporal Dashboard
 👉 **[http://localhost:8080](http://localhost:8080)**
 
-### 2. View Temporal Server Logs
-If you need to verify the orchestration server is healthy:
+### Database Queries (via Docker)
 ```bash
-docker logs -f temporal
+# Check Documents
+docker exec -it md_postgres psql -U user -d md_pipeline -c "SELECT id, title, created_at FROM documents;"
+
+# Check Q&A Density
+docker exec -it md_postgres psql -U user -d md_pipeline -c "SELECT count(*) FROM qa_pairs;"
+
+# Clean Database (CAUTION)
+docker exec md_postgres psql -U user -d md_pipeline -c "TRUNCATE documents CASCADE;"
 ```
 
 ---
 
-## 🗄️ Checking Database Entries
-
-The pipeline stores everything iteratively. You can verify insertion using the `docker exec` command running `psql`.
-
-**1. Check Processed Documents**
-```bash
-docker exec -it md_postgres psql -U user -d md_pipeline -c "SELECT id, title, created_at FROM documents;"
-```
-
-**2. Check Generated Chunks**
-```bash
-docker exec -it md_postgres psql -U user -d md_pipeline -c "SELECT chunk_index, substring(content, 1, 50) AS content_preview FROM chunks ORDER BY chunk_index LIMIT 5;"
-```
-
-**3. Check AI-Generated Knowledge Base (JSON)**
-Using the `-x` flag makes JSON easier to read in the terminal:
-```bash
-docker exec -it md_postgres psql -U user -d md_pipeline -x -c "SELECT summary, key_points FROM knowledge_base LIMIT 2;"
-```
-
-**4. Check Generated Q&A Pairs**
-```bash
-docker exec -it md_postgres psql -U user -d md_pipeline -c "SELECT question, difficulty FROM qa_pairs LIMIT 10;"
-```
+> 📚 **Technical Deep Dive**: For architecture details, chunking logic, and LLM tuning instructions, see [INFO.md](INFO.md).

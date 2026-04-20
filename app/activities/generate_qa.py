@@ -8,14 +8,14 @@ llm = LLMService()
 
 def build_prompt(content: str) -> str:
     return f"""
-Generate high-quality Q&A pairs from the content below.
+Generate EXACTLY 5 high-quality Q&A pairs from the content below.
 
 Rules:
+- You must provide exactly 5 pairs.
 - Questions must be specific and meaningful
-- Avoid duplicates
-- Cover key concepts
+- Cover different parts of the text
 
-Return STRICT JSON:
+Return STRICT JSON LIST:
 [
   {{
     "question": "",
@@ -79,10 +79,11 @@ def safe_parse_qa(raw: str):
 @activity.defn
 def generate_qa_chunk(chunk: dict) -> list:
     """
-    Generate QA pairs for a single chunk.
+    Generate exactly 5 QA pairs for a single chunk.
     """
     prompt = build_prompt(chunk["content"])
-    # Simple schema for better grammar compatibility
+    
+    # Simple schema for better grammar compatibility with strict item count
     simple_schema = {
         "type": "array",
         "items": {
@@ -93,7 +94,9 @@ def generate_qa_chunk(chunk: dict) -> list:
                 "difficulty": {"enum": ["easy", "medium", "hard"]}
             },
             "required": ["question", "answer", "difficulty"]
-        }
+        },
+        "minItems": 5,
+        "maxItems": 5
     }
     
     raw = llm.generate(prompt, schema=simple_schema)
